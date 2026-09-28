@@ -7,6 +7,10 @@ import { ProductsTable } from "@/components/products/products-table";
 import { ProductsPagination } from "@/components/products/products-pagination";
 import { ProductsToolbar } from "@/components/products/products-toolbar";
 
+import Link from "next/link";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 export default function ProductsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -95,12 +99,23 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Products</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Products</h1>
 
-        <p className="text-sm text-muted-foreground">
-          Manage and monitor your product inventory.
-        </p>
+          <p className="text-sm text-muted-foreground">
+            Manage and monitor your product inventory.
+          </p>
+        </div>
+
+        <Button
+          render={
+            <Link href="/products/new">
+              <Plus />
+              Add Product
+            </Link>
+          }
+        />
       </div>
 
       <ProductsToolbar

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { productSchema } from "@/lib/validation/product";
 
 export async function GET(request: NextRequest) {
   try {
@@ -76,6 +77,51 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("GET /api/products error:", error);
+
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    const result = productSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: "Invalid product data",
+          details: result.error.flatten(),
+        },
+        { status: 400 },
+      );
+    }
+
+    const { data, error } = await supabase
+      .from("products")
+      .insert({
+        ...result.data,
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Create product error:", error);
+
+      return NextResponse.json(
+        { error: "Failed to create product" },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ data }, { status: 201 });
+  } catch (error) {
+    console.error("POST /api/products error:", error);
 
     return NextResponse.json(
       { error: "Internal server error" },
