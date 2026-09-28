@@ -32,9 +32,6 @@ export default function DashboardPage() {
   }
 
   if (isError || !data) {
-    return <p className="text-destructive">Failed to load dashboard.</p>;
-  }
-  if (isError || !data) {
     return (
       <div className="flex min-h-100 flex-col items-center justify-center gap-4 text-center">
         <div>

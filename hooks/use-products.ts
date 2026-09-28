@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { useQuery } from "@tanstack/react-query"
-import type { ProductsResponse } from "@/types/product"
+import { useQuery } from "@tanstack/react-query";
+import type { ProductsResponse } from "@/types/product";
 
 interface UseProductsParams {
-  page?: number
-  limit?: number
-  search?: string
-  category?: string
-  status?: string
-  sort?: string
-  order?: "asc" | "desc"
+  page?: number;
+  limit?: number;
+  search?: string;
+  category?: string;
+  status?: string;
+  sort?: string;
+  order?: "asc" | "desc";
 }
 
 export function useProducts({
@@ -23,16 +23,7 @@ export function useProducts({
   order = "desc",
 }: UseProductsParams) {
   return useQuery<ProductsResponse>({
-    queryKey: [
-      "products",
-      page,
-      limit,
-      search,
-      category,
-      status,
-      sort,
-      order,
-    ],
+    queryKey: ["products", page, limit, search, category, status, sort, order],
 
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -40,29 +31,29 @@ export function useProducts({
         limit: limit.toString(),
         sort,
         order,
-      })
+      });
 
       if (search) {
-        params.set("search", search)
+        params.set("search", search);
       }
 
       if (category !== "all") {
-        params.set("category", category)
+        params.set("category", category);
       }
 
       if (status !== "all") {
-        params.set("status", status)
+        params.set("status", status);
       }
 
-      const response = await fetch(`/api/products?${params.toString()}`)
+      const response = await fetch(`/api/products?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error("Failed to fetch products")
+        throw new Error("Failed to fetch products");
       }
 
-      return response.json()
+      return response.json();
     },
 
     placeholderData: (previousData) => previousData,
-  })
+  });
 }

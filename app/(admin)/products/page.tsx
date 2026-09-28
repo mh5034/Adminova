@@ -8,8 +8,9 @@ import { ProductsPagination } from "@/components/products/products-pagination";
 import { ProductsToolbar } from "@/components/products/products-toolbar";
 
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Boxes, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ProductsTableSkeleton } from "@/components/products/products-table-skeleton";
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -112,14 +113,6 @@ export default function ProductsPage() {
     });
   }
 
-  if (isLoading) {
-    return <p>Loading products...</p>;
-  }
-
-  if (isError) {
-    return <p>Failed to load products.</p>;
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -151,14 +144,35 @@ export default function ProductsPage() {
         onStatusChange={handleStatusChange}
       />
 
-      <ProductsTable
-        products={data?.data ?? []}
-        sort={sort}
-        page={page}
-        order={order}
-        hasActiveSort={hasActiveSort}
-        onSortChange={handleSortChange}
-      />
+      {isLoading ? (
+        <ProductsTableSkeleton />
+      ) : isError ? (
+        <div className="rounded-lg border p-8 text-center">
+          <p className="font-medium">Unable to load products</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Please try again.
+          </p>
+        </div>
+      ) : data && data.data.length > 0 ? (
+        <ProductsTable
+          products={data.data}
+          page={page}
+          sort={sort}
+          order={order}
+          hasActiveSort={hasActiveSort}
+          onSortChange={handleSortChange}
+        />
+      ) : (
+        <div className="rounded-lg border p-10 text-center">
+          <Boxes className="mx-auto mb-3 size-8 text-muted-foreground" />
+
+          <h3 className="font-medium">No products found</h3>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Try changing your search or filters.
+          </p>
+        </div>
+      )}
 
       <ProductsPagination
         page={page}
