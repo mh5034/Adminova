@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  LayoutDashboard,
-  Package,
-  ShoppingCart,
-  Users,
-  Settings,
-} from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users } from "lucide-react";
 
 import {
   Sidebar,
@@ -18,7 +12,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
-  SidebarFooter,
 } from "@/components/ui/sidebar";
 
 const items = [
@@ -73,17 +66,6 @@ export default function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <Settings />
-              <span>Settings</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   );
 }

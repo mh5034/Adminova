@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Search, X } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import {
@@ -42,12 +43,30 @@ export function ProductsToolbar({
 
   return (
     <div className="flex flex-col gap-3 md:flex-row">
-      <Input
-        placeholder="Search products..."
-        value={searchValue}
-        onChange={(event) => setSearchValue(event.target.value)}
-        className="md:max-w-sm"
-      />
+      <div className="relative w-full md:max-w-sm">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+        <Input
+          placeholder="Search products..."
+          value={searchValue}
+          onChange={(event) => setSearchValue(event.target.value)}
+          className="pl-9 pr-9"
+        />
+
+        {searchValue && (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchValue("");
+              onSearchChange("");
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            aria-label="Clear search"
+          >
+            <X className="size-4" />
+          </button>
+        )}
+      </div>
 
       <Select
         value={category}

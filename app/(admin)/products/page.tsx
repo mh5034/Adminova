@@ -21,10 +21,14 @@ export default function ProductsPage() {
   const category = searchParams.get("category") ?? "all";
   const status = searchParams.get("status") ?? "all";
 
-  const sort = searchParams.get("sort") ?? "created_at";
+  const sortParam = searchParams.get("sort");
+  const orderParam = searchParams.get("order");
 
-  const order: "asc" | "desc" =
-    searchParams.get("order") === "asc" ? "asc" : "desc";
+  const sort = sortParam ?? "created_at";
+
+  const order: "asc" | "desc" = orderParam === "asc" ? "asc" : "desc";
+
+  const hasActiveSort = sortParam !== null;
 
   const { data, isLoading, isError } = useProducts({
     page,
@@ -37,11 +41,30 @@ export default function ProductsPage() {
   });
 
   function handleSortChange(column: string) {
-    const newOrder = sort === column && order === "asc" ? "desc" : "asc";
+    // No active sort or switching columns → ascending
+    if (!hasActiveSort || sort !== column) {
+      updateParams({
+        sort: column,
+        order: "asc",
+        page: "1",
+      });
+      return;
+    }
 
+    // Ascending → descending
+    if (order === "asc") {
+      updateParams({
+        sort: column,
+        order: "desc",
+        page: "1",
+      });
+      return;
+    }
+
+    // Descending → default
     updateParams({
-      sort: column,
-      order: newOrder,
+      sort: "",
+      order: "",
       page: "1",
     });
   }
@@ -132,6 +155,7 @@ export default function ProductsPage() {
         products={data?.data ?? []}
         sort={sort}
         order={order}
+        hasActiveSort={hasActiveSort}
         onSortChange={handleSortChange}
       />
 

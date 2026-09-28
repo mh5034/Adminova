@@ -18,16 +18,18 @@ interface ProductsTableProps {
   products: Product[];
   sort: string;
   order: "asc" | "desc";
+  hasActiveSort: boolean;
   onSortChange: (column: string) => void;
 }
 export function ProductsTable({
   products,
   sort,
   order,
+  hasActiveSort,
   onSortChange,
 }: ProductsTableProps) {
   function SortIcon({ column }: { column: string }) {
-    if (sort !== column) {
+    if (!hasActiveSort || sort !== column) {
       return <ArrowUpDown className="ml-2 size-4" />;
     }
 

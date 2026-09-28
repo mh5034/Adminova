@@ -1,9 +1,8 @@
 "use client";
 
-import { Bell, Search, LogOut, Settings, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -40,19 +39,6 @@ export default function AppHeader() {
 
       {/* Right */}
       <div className="flex items-center gap-2">
-        {/* Search */}
-        <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
-          <Input placeholder="Search..." className="w-64 pl-9" />
-        </div>
-
-        {/* Notifications */}
-        <Button variant="ghost" size="icon">
-          <Bell className="size-5" />
-          <span className="sr-only">Notifications</span>
-        </Button>
-
         {/* User */}
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -73,11 +59,6 @@ export default function AppHeader() {
             <DropdownMenuItem>
               <User />
               Profile
-            </DropdownMenuItem>
-
-            <DropdownMenuItem>
-              <Settings />
-              Settings
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
