@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 import { QueryProvider } from "@/components/providers/query-provider";
 
@@ -17,7 +18,8 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <QueryProvider>
-          <main className="flex-1 p-4 md:p-6">{children}</main>
+          {children}
+          <Toaster />
         </QueryProvider>
       </body>
     </html>

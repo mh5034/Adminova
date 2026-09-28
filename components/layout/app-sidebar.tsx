@@ -25,16 +25,6 @@ const items = [
     url: "/products",
     icon: Package,
   },
-  {
-    title: "Orders",
-    url: "/orders",
-    icon: ShoppingCart,
-  },
-  {
-    title: "Customers",
-    url: "/customers",
-    icon: Users,
-  },
 ];
 
 export default function AppSidebar() {

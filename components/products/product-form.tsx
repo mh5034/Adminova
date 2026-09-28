@@ -1,19 +1,17 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-import {
-  productSchema,
-  type ProductInput,
-} from "@/lib/validation/product"
+import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { productSchema, type ProductInput } from "@/lib/validation/product";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 import {
   Select,
@@ -21,11 +19,17 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
-export function ProductForm() {
-  const router = useRouter()
-  const [serverError, setServerError] = useState<string | null>(null)
+import type { Product } from "@/types/product";
+
+interface ProductFormProps {
+  product?: Product;
+}
+
+export function ProductForm({ product }: ProductFormProps) {
+  const router = useRouter();
+  const isEditing = Boolean(product);
 
   const {
     register,
@@ -36,49 +40,69 @@ export function ProductForm() {
   } = useForm<ProductInput>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      category: "",
-      price: 0,
-      stock: 0,
-      status: "draft",
-      image_url: null,
+      name: product?.name ?? "",
+      description: product?.description ?? "",
+      category: product?.category ?? "",
+      price: product?.price ?? 0,
+      stock: product?.stock ?? 0,
+      status: product?.status ?? "draft",
+      image_url: product?.image_url ?? null,
     },
-  })
+  });
 
-  const category = watch("category")
-  const status = watch("status")
+  const category = watch("category");
+  const status = watch("status");
 
   async function onSubmit(values: ProductInput) {
-    setServerError(null)
-
     try {
-      const response = await fetch("/api/products", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        isEditing ? `/api/products/${product!.id}` : "/api/products",
+        {
+          method: isEditing ? "PATCH" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
         },
-        body: JSON.stringify(values),
-      })
+      );
 
       if (!response.ok) {
-        throw new Error("Failed to create product")
+        const result = await response.json();
+
+        throw new Error(
+          result.error ||
+            (isEditing
+              ? "Failed to update product"
+              : "Failed to create product"),
+        );
       }
 
-      router.push("/products")
-      router.refresh()
-    } catch {
-      setServerError(
-        "Something went wrong while creating the product."
-      )
+      toast.success(
+        isEditing
+          ? "Product updated successfully"
+          : "Product added successfully",
+      );
+
+      router.push("/products");
+      router.refresh();
+    } catch (error) {
+      console.error(
+        isEditing ? "Update product error:" : "Create product error:",
+        error,
+      );
+
+      toast.error(
+        isEditing ? "Failed to update product" : "Failed to add product",
+        {
+          description:
+            error instanceof Error ? error.message : "Please try again.",
+        },
+      );
     }
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-6"
-    >
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid gap-2">
         <Label htmlFor="name">Product name</Label>
 
@@ -89,9 +113,7 @@ export function ProductForm() {
         />
 
         {errors.name && (
-          <p className="text-sm text-destructive">
-            {errors.name.message}
-          </p>
+          <p className="text-sm text-destructive">{errors.name.message}</p>
         )}
       </div>
 
@@ -120,7 +142,7 @@ export function ProductForm() {
             if (value) {
               setValue("category", value, {
                 shouldValidate: true,
-              })
+              });
             }
           }}
         >
@@ -129,32 +151,20 @@ export function ProductForm() {
           </SelectTrigger>
 
           <SelectContent>
-            <SelectItem value="Electronics">
-              Electronics
-            </SelectItem>
+            <SelectItem value="Electronics">Electronics</SelectItem>
 
-            <SelectItem value="Clothing">
-              Clothing
-            </SelectItem>
+            <SelectItem value="Clothing">Clothing</SelectItem>
 
-            <SelectItem value="Home & Kitchen">
-              Home & Kitchen
-            </SelectItem>
+            <SelectItem value="Home & Kitchen">Home & Kitchen</SelectItem>
 
-            <SelectItem value="Sports">
-              Sports
-            </SelectItem>
+            <SelectItem value="Sports">Sports</SelectItem>
 
-            <SelectItem value="Accessories">
-              Accessories
-            </SelectItem>
+            <SelectItem value="Accessories">Accessories</SelectItem>
           </SelectContent>
         </Select>
 
         {errors.category && (
-          <p className="text-sm text-destructive">
-            {errors.category.message}
-          </p>
+          <p className="text-sm text-destructive">{errors.category.message}</p>
         )}
       </div>
 
@@ -171,9 +181,7 @@ export function ProductForm() {
           />
 
           {errors.price && (
-            <p className="text-sm text-destructive">
-              {errors.price.message}
-            </p>
+            <p className="text-sm text-destructive">{errors.price.message}</p>
           )}
         </div>
 
@@ -189,9 +197,7 @@ export function ProductForm() {
           />
 
           {errors.stock && (
-            <p className="text-sm text-destructive">
-              {errors.stock.message}
-            </p>
+            <p className="text-sm text-destructive">{errors.stock.message}</p>
           )}
         </div>
       </div>
@@ -209,7 +215,7 @@ export function ProductForm() {
             ) {
               setValue("status", value, {
                 shouldValidate: true,
-              })
+              });
             }
           }}
         >
@@ -225,9 +231,7 @@ export function ProductForm() {
         </Select>
 
         {errors.status && (
-          <p className="text-sm text-destructive">
-            {errors.status.message}
-          </p>
+          <p className="text-sm text-destructive">{errors.status.message}</p>
         )}
       </div>
 
@@ -238,23 +242,14 @@ export function ProductForm() {
           id="image_url"
           placeholder="https://example.com/product.jpg"
           {...register("image_url", {
-            setValueAs: (value) =>
-              value === "" ? null : value,
+            setValueAs: (value) => (value === "" ? null : value),
           })}
         />
 
         {errors.image_url && (
-          <p className="text-sm text-destructive">
-            {errors.image_url.message}
-          </p>
+          <p className="text-sm text-destructive">{errors.image_url.message}</p>
         )}
       </div>
-
-      {serverError && (
-        <p className="text-sm text-destructive">
-          {serverError}
-        </p>
-      )}
 
       <div className="flex justify-end gap-3">
         <Button
@@ -265,13 +260,16 @@ export function ProductForm() {
           Cancel
         </Button>
 
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Creating..." : "Create product"}
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting
+            ? isEditing
+              ? "Saving..."
+              : "Creating..."
+            : isEditing
+              ? "Save changes"
+              : "Create product"}
         </Button>
       </div>
     </form>
-  )
+  );
 }

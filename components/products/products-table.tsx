@@ -4,6 +4,17 @@ import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
+import Link from "next/link";
+
+import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -13,6 +24,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useState } from "react";
+import { DeleteProductDialog } from "./delete-product-dialog";
 
 interface ProductsTableProps {
   products: Product[];
@@ -28,6 +41,7 @@ export function ProductsTable({
   hasActiveSort,
   onSortChange,
 }: ProductsTableProps) {
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   function SortIcon({ column }: { column: string }) {
     if (!hasActiveSort || sort !== column) {
       return <ArrowUpDown className="ml-2 size-4" />;
@@ -78,13 +92,21 @@ export function ProductsTable({
                 <SortIcon column="created_at" />
               </Button>
             </TableHead>
+            <TableHead className="w-12.5" />
           </TableRow>
         </TableHeader>
 
         <TableBody>
           {products.map((product) => (
             <TableRow key={product.id}>
-              <TableCell className="font-medium">{product.name}</TableCell>
+              <TableCell className="font-medium">
+                <Link
+                  href={`/products/${product.id}`}
+                  className="font-medium hover:underline"
+                >
+                  {product.name}
+                </Link>
+              </TableCell>
 
               <TableCell>{product.category}</TableCell>
 
@@ -99,10 +121,61 @@ export function ProductsTable({
               <TableCell>
                 {new Date(product.created_at).toLocaleDateString()}
               </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Actions for ${product.name}`}
+                      >
+                        <MoreHorizontal />
+                      </Button>
+                    }
+                  />
+
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      render={
+                        <Link href={`/products/${product.id}`}>
+                          <Eye />
+                          View details
+                        </Link>
+                      }
+                    />
+
+                    <DropdownMenuItem
+                      render={
+                        <Link href={`/products/${product.id}/edit`}>
+                          <Pencil />
+                          Edit
+                        </Link>
+                      }
+                    />
+
+                    <DropdownMenuItem
+                      onClick={() => setProductToDelete(product)}
+                    >
+                      <Trash2 />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      <DeleteProductDialog
+        product={productToDelete}
+        open={Boolean(productToDelete)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setProductToDelete(null);
+          }
+        }}
+      />
     </div>
   );
 }
