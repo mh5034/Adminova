@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useProducts } from "@/hooks/use-products";
 import { ProductsTable } from "@/components/products/products-table";
 import { ProductsPagination } from "@/components/products/products-pagination";
+import { ProductsToolbar } from "@/components/products/products-toolbar";
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -12,17 +13,59 @@ export default function ProductsPage() {
 
   const page = Math.max(Number(searchParams.get("page")) || 1, 1);
 
+  const search = searchParams.get("search") ?? "";
+  const category = searchParams.get("category") ?? "all";
+  const status = searchParams.get("status") ?? "all";
+
   const { data, isLoading, isError } = useProducts({
     page,
     limit: 10,
+    search,
+    category,
+    status,
   });
 
-  function handlePageChange(newPage: number) {
+  function updateParams(updates: Record<string, string>) {
     const params = new URLSearchParams(searchParams.toString());
 
-    params.set("page", newPage.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (!value || value === "all") {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
 
-    router.push(`/products?${params.toString()}`);
+    router.replace(`/products?${params.toString()}`, {
+      scroll: false,
+    });
+  }
+
+  function handlePageChange(newPage: number) {
+    updateParams({
+      page: newPage.toString(),
+    });
+  }
+
+  function handleSearchChange(value: string) {
+    updateParams({
+      search: value,
+      page: "1",
+    });
+  }
+
+  function handleCategoryChange(value: string) {
+    updateParams({
+      category: value,
+      page: "1",
+    });
+  }
+
+  function handleStatusChange(value: string) {
+    updateParams({
+      status: value,
+      page: "1",
+    });
   }
 
   if (isLoading) {
@@ -42,6 +85,15 @@ export default function ProductsPage() {
           Manage and monitor your product inventory.
         </p>
       </div>
+
+      <ProductsToolbar
+        search={search}
+        category={category}
+        status={status}
+        onSearchChange={handleSearchChange}
+        onCategoryChange={handleCategoryChange}
+        onStatusChange={handleStatusChange}
+      />
 
       <ProductsTable products={data?.data ?? []} />
 
