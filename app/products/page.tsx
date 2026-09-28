@@ -17,13 +17,30 @@ export default function ProductsPage() {
   const category = searchParams.get("category") ?? "all";
   const status = searchParams.get("status") ?? "all";
 
+  const sort = searchParams.get("sort") ?? "created_at";
+
+  const order: "asc" | "desc" =
+    searchParams.get("order") === "asc" ? "asc" : "desc";
+
   const { data, isLoading, isError } = useProducts({
     page,
     limit: 10,
     search,
     category,
     status,
+    sort,
+    order,
   });
+
+  function handleSortChange(column: string) {
+    const newOrder = sort === column && order === "asc" ? "desc" : "asc";
+
+    updateParams({
+      sort: column,
+      order: newOrder,
+      page: "1",
+    });
+  }
 
   function updateParams(updates: Record<string, string>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -95,7 +112,12 @@ export default function ProductsPage() {
         onStatusChange={handleStatusChange}
       />
 
-      <ProductsTable products={data?.data ?? []} />
+      <ProductsTable
+        products={data?.data ?? []}
+        sort={sort}
+        order={order}
+        onSortChange={handleSortChange}
+      />
 
       <ProductsPagination
         page={page}
