@@ -3,10 +3,8 @@ import "./globals.css";
 import AppHeader from "@/components/layout/app-header";
 import AppSidebar from "@/components/layout/app-sidebar";
 
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 export const metadata: Metadata = {
   title: "Admninova",
@@ -17,15 +15,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en">
       <body>
-        <SidebarProvider>
-          <AppSidebar />
+        <QueryProvider>
+          <SidebarProvider>
+            <AppSidebar />
 
-          <SidebarInset>
-            <AppHeader />
+            <SidebarInset>
+              <AppHeader />
 
-            <main className="flex-1 p-4 md:p-6">{children}</main>
-          </SidebarInset>
-        </SidebarProvider>
+              <main className="flex-1 p-4 md:p-6">{children}</main>
+            </SidebarInset>
+          </SidebarProvider>
+        </QueryProvider>
       </body>
     </html>
   );
