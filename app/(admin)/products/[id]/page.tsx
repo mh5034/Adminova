@@ -29,7 +29,13 @@ export default async function ProductDetailsPage({
   if (error || !product) {
     notFound();
   }
-  
+  const { data: relatedProducts } = await supabase
+    .from("products")
+    .select("id, name, category, price, status, image_url")
+    .eq("category", product.category)
+    .neq("id", product.id)
+    .limit(4);
+
   const { data: activities } = await supabase
     .from("product_activities")
     .select("*")
@@ -197,6 +203,61 @@ export default async function ProductDetailsPage({
           <div className="py-8 text-center">
             <p className="text-sm text-muted-foreground">
               No activity recorded yet.
+            </p>
+          </div>
+        )}
+      </div>
+      {/* Related products */}
+      <div className="rounded-lg border p-6">
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold">Related products</h2>
+          <p className="text-sm text-muted-foreground">
+            Other products in the {product.category} category.
+          </p>
+        </div>
+
+        {relatedProducts && relatedProducts.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {relatedProducts.map((relatedProduct) => (
+              <Link
+                key={relatedProduct.id}
+                href={`/products/${relatedProduct.id}`}
+                className="group overflow-hidden rounded-lg border transition-colors hover:bg-muted/50"
+              >
+                <div className="relative aspect-video bg-muted">
+                  {relatedProduct.image_url ? (
+                    <Image
+                      src={relatedProduct.image_url}
+                      alt={relatedProduct.name}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 25vw"
+                      className="object-cover transition-transform group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex size-full items-center justify-center">
+                      <ImageIcon className="size-8 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2 p-4">
+                  <p className="truncate font-medium">{relatedProduct.name}</p>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium">
+                      ${Number(relatedProduct.price).toFixed(2)}
+                    </p>
+
+                    <Badge variant="outline">{relatedProduct.status}</Badge>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="py-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              No related products found.
             </p>
           </div>
         )}
