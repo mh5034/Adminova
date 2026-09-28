@@ -1,27 +1,34 @@
-"use client"
+"use client";
 
-import { Bell, Search, LogOut, Settings, User } from "lucide-react"
+import { Bell, Search, LogOut, Settings, User } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AppHeader() {
+  const supabase = createClient();
+  const router = useRouter();
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+
+    router.push("/login");
+    router.refresh();
+  }
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b px-4 md:px-6">
-      
       {/* Left */}
       <div className="flex items-center gap-3">
         <SidebarTrigger />
@@ -33,15 +40,11 @@ export default function AppHeader() {
 
       {/* Right */}
       <div className="flex items-center gap-2">
-        
         {/* Search */}
         <div className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
-          <Input
-            placeholder="Search..."
-            className="w-64 pl-9"
-          />
+          <Input placeholder="Search..." className="w-64 pl-9" />
         </div>
 
         {/* Notifications */}
@@ -53,9 +56,7 @@ export default function AppHeader() {
         {/* User */}
         <DropdownMenu>
           <DropdownMenuTrigger
-            render={
-              <Button variant="ghost" className="h-10 gap-2 px-2" />
-            }
+            render={<Button variant="ghost" className="h-10 gap-2 px-2" />}
           >
             <Avatar className="size-8">
               <AvatarImage src="" />
@@ -83,12 +84,11 @@ export default function AppHeader() {
 
             <DropdownMenuItem>
               <LogOut />
-              Sign out
+              <button onClick={handleLogout}>Sign out</button>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
       </div>
     </header>
-  )
+  );
 }

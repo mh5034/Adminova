@@ -109,6 +109,7 @@ export default function ProductsPage() {
         </div>
 
         <Button
+          nativeButton={false}
           render={
             <Link href="/products/new">
               <Plus />
