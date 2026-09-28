@@ -89,6 +89,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
     const body = await request.json();
 
     const result = productSchema.safeParse(body);
@@ -110,7 +112,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabase
+    const { data: product, error } = await supabase
       .from("products")
       .insert({
         ...result.data,
@@ -128,7 +130,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ data }, { status: 201 });
+    // Record product creation in activity history
+    const { error: activityError } = await supabase
+      .from("product_activities")
+      .insert({
+        product_id: product.id,
+        action: "created",
+        description: "Product was created",
+      });
+
+    if (activityError) {
+      console.error("Create product activity error:", activityError);
+    }
+
+    return NextResponse.json({ data: product }, { status: 201 });
   } catch (error) {
     console.error("POST /api/products error:", error);
 

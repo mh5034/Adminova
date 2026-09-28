@@ -1,6 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, ImageIcon, Pencil } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 
@@ -28,6 +29,14 @@ export default async function ProductDetailsPage({
   if (error || !product) {
     notFound();
   }
+  
+  const { data: activities } = await supabase
+    .from("product_activities")
+    .select("*")
+    .eq("product_id", id)
+    .order("created_at", {
+      ascending: false,
+    });
 
   return (
     <div className="space-y-6">
@@ -70,38 +79,63 @@ export default async function ProductDetailsPage({
         <div className="rounded-lg border p-6 lg:col-span-2">
           <h2 className="mb-6 text-lg font-semibold">Product information</h2>
 
-          <dl className="grid gap-6 sm:grid-cols-2">
-            <div>
-              <dt className="text-sm text-muted-foreground">Category</dt>
-              <dd className="mt-1 font-medium">{product.category}</dd>
+          {/* Product image + information */}
+          <div className="grid gap-6 md:grid-cols-[240px_1fr]">
+            {/* Product image */}
+            <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
+              {product.image_url ? (
+                <Image
+                  src={product.image_url}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 240px"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex size-full flex-col items-center justify-center gap-2 text-muted-foreground">
+                  <ImageIcon className="size-10" />
+
+                  <span className="text-sm">No product image</span>
+                </div>
+              )}
             </div>
 
+            {/* Product fields */}
             <div>
-              <dt className="text-sm text-muted-foreground">Price</dt>
-              <dd className="mt-1 font-medium">
-                ${Number(product.price).toFixed(2)}
-              </dd>
+              <dl className="grid gap-6 sm:grid-cols-2">
+                <div>
+                  <dt className="text-sm text-muted-foreground">Category</dt>
+                  <dd className="mt-1 font-medium">{product.category}</dd>
+                </div>
+
+                <div>
+                  <dt className="text-sm text-muted-foreground">Price</dt>
+                  <dd className="mt-1 font-medium">
+                    ${Number(product.price).toFixed(2)}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt className="text-sm text-muted-foreground">Stock</dt>
+                  <dd className="mt-1 font-medium">{product.stock}</dd>
+                </div>
+
+                <div>
+                  <dt className="text-sm text-muted-foreground">Status</dt>
+                  <dd className="mt-1">
+                    <Badge variant="outline">{product.status}</Badge>
+                  </dd>
+                </div>
+              </dl>
+
+              <div className="mt-6 border-t pt-6">
+                <p className="text-sm text-muted-foreground">Description</p>
+
+                <p className="mt-2">
+                  {product.description || "No description provided."}
+                </p>
+              </div>
             </div>
-
-            <div>
-              <dt className="text-sm text-muted-foreground">Stock</dt>
-              <dd className="mt-1 font-medium">{product.stock}</dd>
-            </div>
-
-            <div>
-              <dt className="text-sm text-muted-foreground">Status</dt>
-              <dd className="mt-1">
-                <Badge variant="outline">{product.status}</Badge>
-              </dd>
-            </div>
-          </dl>
-
-          <div className="mt-6 border-t pt-6">
-            <p className="text-sm text-muted-foreground">Description</p>
-
-            <p className="mt-2">
-              {product.description || "No description provided."}
-            </p>
           </div>
         </div>
 
@@ -123,6 +157,49 @@ export default async function ProductDetailsPage({
             </p>
           </div>
         </div>
+      </div>
+      {/* Activity history */}
+      <div className="rounded-lg border p-6">
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold">Activity history</h2>
+
+          <p className="text-sm text-muted-foreground">
+            Recent changes made to this product.
+          </p>
+        </div>
+
+        {activities && activities.length > 0 ? (
+          <div className="space-y-0">
+            {activities.map((activity, index) => (
+              <div
+                key={activity.id}
+                className="relative flex gap-4 pb-6 last:pb-0"
+              >
+                {/* Timeline line */}
+                {index !== activities.length - 1 && (
+                  <div className="absolute left-1.75 top-4 h-full w-px bg-border" />
+                )}
+
+                {/* Timeline dot */}
+                <div className="relative z-10 mt-1.5 size-4 shrink-0 rounded-full border-4 border-background bg-primary" />
+
+                <div>
+                  <p className="font-medium">{activity.description}</p>
+
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {new Date(activity.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              No activity recorded yet.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

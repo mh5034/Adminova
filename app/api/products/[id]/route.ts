@@ -61,7 +61,13 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    const { data, error } = await supabase
+    const { data: existingProduct } = await supabase
+      .from("products")
+      .select("status, stock, price, category, name, description, image_url")
+      .eq("id", id)
+      .single();
+
+    const { data: product, error } = await supabase
       .from("products")
       .update({
         ...result.data,
@@ -80,7 +86,69 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    return NextResponse.json({ data });
+    const activities = [];
+
+    if (existingProduct) {
+      if (existingProduct.status !== product.status) {
+        activities.push({
+          product_id: id,
+          action: "status_changed",
+          description: `Status changed from ${existingProduct.status} to ${product.status}`,
+        });
+      }
+
+      if (existingProduct.stock !== product.stock) {
+        activities.push({
+          product_id: id,
+          action: "stock_changed",
+          description: `Stock changed from ${existingProduct.stock} to ${product.stock}`,
+        });
+      }
+
+      if (existingProduct.price !== product.price) {
+        activities.push({
+          product_id: id,
+          action: "price_changed",
+          description: `Price changed from $${existingProduct.price} to $${product.price}`,
+        });
+      }
+
+      if (existingProduct.category !== product.category) {
+        activities.push({
+          product_id: id,
+          action: "category_changed",
+          description: `Category changed from ${existingProduct.category} to ${product.category}`,
+        });
+      }
+
+      if (existingProduct.name !== product.name) {
+        activities.push({
+          product_id: id,
+          action: "name_changed",
+          description: `Name changed from "${existingProduct.name}" to "${product.name}"`,
+        });
+      }
+
+      if (existingProduct.description !== product.description) {
+        activities.push({
+          product_id: id,
+          action: "description_changed",
+          description: "Product description was updated",
+        });
+      }
+    }
+
+    if (activities.length > 0) {
+      const { error: activityError } = await supabase
+        .from("product_activities")
+        .insert(activities);
+
+      if (activityError) {
+        console.error("Activity logging error:", activityError);
+      }
+    }
+
+    return NextResponse.json({ product });
   } catch (error) {
     console.error("PATCH product error:", error);
 
