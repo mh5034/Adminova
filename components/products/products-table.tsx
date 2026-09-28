@@ -6,6 +6,22 @@ import { Button } from "@/components/ui/button";
 
 import Link from "next/link";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+import { Checkbox } from "@/components/ui/checkbox";
+
 import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import {
@@ -24,12 +40,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DeleteProductDialog } from "./delete-product-dialog";
 
 interface ProductsTableProps {
   products: Product[];
   sort: string;
+  page: number;
   order: "asc" | "desc";
   hasActiveSort: boolean;
   onSortChange: (column: string) => void;
@@ -37,10 +54,16 @@ interface ProductsTableProps {
 export function ProductsTable({
   products,
   sort,
+  page,
   order,
   hasActiveSort,
   onSortChange,
 }: ProductsTableProps) {
+  const queryClient = useQueryClient();
+  const [isBulkLoading, setIsBulkLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   function SortIcon({ column }: { column: string }) {
     if (!hasActiveSort || sort !== column) {
@@ -53,11 +76,145 @@ export function ProductsTable({
       <ArrowDown className="ml-2 size-4" />
     );
   }
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [page]);
+
+  async function handleBulkStatus(status: "active" | "inactive" | "draft") {
+    try {
+      setIsBulkLoading(true);
+
+      const response = await fetch("/api/products/bulk", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ids: selectedIds,
+          status,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update products");
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: ["products"],
+      });
+
+      setSelectedIds([]);
+
+      toast.success("Products updated successfully");
+    } catch {
+      toast.error("Failed to update products");
+    } finally {
+      setIsBulkLoading(false);
+    }
+  }
+  async function handleBulkDelete() {
+    try {
+      setIsBulkLoading(true);
+
+      const response = await fetch("/api/products/bulk", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ids: selectedIds,
+        }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+
+        throw new Error(result.error || "Failed to delete products");
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: ["products"],
+      });
+
+      toast.success(
+        `${selectedIds.length} ${
+          selectedIds.length === 1 ? "product" : "products"
+        } deleted successfully`,
+      );
+
+      setSelectedIds([]);
+      setBulkDeleteOpen(false);
+    } catch (error) {
+      console.error("Bulk delete error:", error);
+
+      toast.error("Failed to delete products", {
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      setIsBulkLoading(false);
+    }
+  }
   return (
     <div className="overflow-hidden rounded-lg border">
+      {selectedIds.length > 0 && (
+        <div className="flex items-center justify-between border-b bg-muted/40 p-3">
+          <p className="text-sm font-medium">{selectedIds.length} selected</p>
+
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="outline" size="sm" disabled={isBulkLoading}>
+                    Change status
+                  </Button>
+                }
+              />
+
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleBulkStatus("active")}>
+                  Active
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={() => handleBulkStatus("inactive")}>
+                  Inactive
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={() => handleBulkStatus("draft")}>
+                  Draft
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={isBulkLoading}
+              onClick={() => setBulkDeleteOpen(true)}
+            >
+              <Trash2 className="size-4" />
+              Delete
+            </Button>
+          </div>
+        </div>
+      )}
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-10">
+              <Checkbox
+                checked={
+                  products.length > 0 && selectedIds.length === products.length
+                }
+                onCheckedChange={(checked) => {
+                  setSelectedIds(
+                    checked ? products.map((product) => product.id) : [],
+                  );
+                }}
+                aria-label="Select all products"
+              />
+            </TableHead>
             <TableHead>
               <Button variant="ghost" onClick={() => onSortChange("name")}>
                 Product
@@ -99,6 +256,19 @@ export function ProductsTable({
         <TableBody>
           {products.map((product) => (
             <TableRow key={product.id}>
+              <TableCell>
+                <Checkbox
+                  checked={selectedIds.includes(product.id)}
+                  onCheckedChange={(checked) => {
+                    setSelectedIds((current) =>
+                      checked
+                        ? [...current, product.id]
+                        : current.filter((id) => id !== product.id),
+                    );
+                  }}
+                  aria-label={`Select ${product.name}`}
+                />
+              </TableCell>
               <TableCell className="font-medium">
                 <Link
                   href={`/products/${product.id}`}
@@ -176,6 +346,32 @@ export function ProductsTable({
           }
         }}
       />
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete selected products?</AlertDialogTitle>
+
+            <AlertDialogDescription>
+              You are about to permanently delete {selectedIds.length}{" "}
+              {selectedIds.length === 1 ? "product" : "products"}. This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkLoading}>
+              Cancel
+            </AlertDialogCancel>
+
+            <AlertDialogAction
+              disabled={isBulkLoading}
+              onClick={handleBulkDelete}
+            >
+              {isBulkLoading ? "Deleting..." : `Delete ${selectedIds.length}`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -154,6 +154,7 @@ export default function ProductsPage() {
       <ProductsTable
         products={data?.data ?? []}
         sort={sort}
+        page={page}
         order={order}
         hasActiveSort={hasActiveSort}
         onSortChange={handleSortChange}

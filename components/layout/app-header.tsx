@@ -57,13 +57,6 @@ export default function AppHeader() {
 
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem>
-              <User />
-              Profile
-            </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem>
               <LogOut />
               <button onClick={handleLogout}>Sign out</button>
             </DropdownMenuItem>
