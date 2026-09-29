@@ -63,7 +63,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
     const { data: existingProduct } = await supabase
       .from("products")
-      .select("status, stock, price, category, name, description, image_url")
+      .select(
+        "status, stock, price, category, name, description, image_url, inactive_reason",
+      )
       .eq("id", id)
       .single();
 
@@ -110,6 +112,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           product_id: id,
           action: "price_changed",
           description: `Price changed from $${existingProduct.price} to $${product.price}`,
+        });
+      }
+
+      if (existingProduct.inactive_reason !== product.inactive_reason) {
+        activities.push({
+          product_id: id,
+          action: "inactive_reason_changed",
+          description: `Inactive reason changed from ${existingProduct.inactive_reason} to ${product.inactive_reason}`,
         });
       }
 

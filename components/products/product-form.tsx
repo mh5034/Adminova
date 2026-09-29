@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import {
   Select,
@@ -33,6 +33,9 @@ export function ProductForm({ product }: ProductFormProps) {
   const [step, setStep] = useState(1);
   const router = useRouter();
   const isEditing = Boolean(product);
+  const draftKey = product
+    ? `adminova-product-draft-${product.id}`
+    : "adminova-product-draft-new";
 
   const {
     register,
@@ -40,6 +43,7 @@ export function ProductForm({ product }: ProductFormProps) {
     trigger,
     setValue,
     watch,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ProductInput>({
     resolver: zodResolver(productSchema),
@@ -51,8 +55,33 @@ export function ProductForm({ product }: ProductFormProps) {
       stock: product?.stock ?? 0,
       status: product?.status ?? "draft",
       image_url: product?.image_url ?? null,
+      inactive_reason: product?.inactive_reason ?? null,
     },
   });
+  useEffect(() => {
+    const savedDraft = localStorage.getItem(draftKey);
+
+    if (!savedDraft) return;
+
+    try {
+      const parsedDraft = JSON.parse(savedDraft) as ProductInput;
+      reset(parsedDraft);
+      toast.info("Draft restored");
+    } catch {
+      localStorage.removeItem(draftKey);
+    }
+  }, [draftKey, reset]);
+  useEffect(() => {
+    const subscription = watch((values) => {
+      const timeout = setTimeout(() => {
+        localStorage.setItem(draftKey, JSON.stringify(values));
+      }, 800);
+
+      return () => clearTimeout(timeout);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, draftKey]);
 
   const handleNext = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -64,8 +93,13 @@ export function ProductForm({ product }: ProductFormProps) {
     }
   };
   const category = watch("category");
-  const status = watch("status");
 
+  const status = watch("status");
+  useEffect(() => {
+    if (status !== "inactive") {
+      setValue("inactive_reason", null);
+    }
+  }, [status, setValue]);
   async function onSubmit(values: ProductInput) {
     try {
       const response = await fetch(
@@ -89,6 +123,7 @@ export function ProductForm({ product }: ProductFormProps) {
               : "Failed to create product"),
         );
       }
+      localStorage.removeItem(draftKey);
 
       toast.success(
         isEditing
@@ -142,6 +177,9 @@ export function ProductForm({ product }: ProductFormProps) {
             2
           </div>
         </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Changes are automatically saved as a local draft.
+        </p>
 
         <div className="mt-3 flex justify-between text-sm">
           <span className="font-medium">Basic information</span>
@@ -251,11 +289,26 @@ export function ProductForm({ product }: ProductFormProps) {
             )}
           </div>
           {status === "inactive" && (
-            <div className="rounded-md border bg-muted/50 p-3">
-              <p className="text-sm text-muted-foreground">
-                Inactive products will remain in the catalog but will not be
-                treated as currently available.
+            <div className="grid gap-2 rounded-md border bg-muted/50 p-4">
+              <Label htmlFor="inactive_reason">Inactive reason</Label>
+
+              <Textarea
+                id="inactive_reason"
+                placeholder="Why is this product inactive?"
+                {...register("inactive_reason", {
+                  setValueAs: (value) => (value === "" ? null : value),
+                })}
+              />
+
+              <p className="text-xs text-muted-foreground">
+                This field only appears when the product is inactive.
               </p>
+
+              {errors.inactive_reason && (
+                <p className="text-sm text-destructive">
+                  {errors.inactive_reason.message}
+                </p>
+              )}
             </div>
           )}
         </>

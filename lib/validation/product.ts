@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const productSchema = z.object({
   name: z
@@ -13,14 +13,9 @@ export const productSchema = z.object({
     .max(500, "Description must be less than 500 characters")
     .optional(),
 
-  category: z
-    .string()
-    .trim()
-    .min(1, "Category is required"),
+  category: z.string().trim().min(1, "Category is required"),
 
-  price: z.coerce
-    .number()
-    .nonnegative("Price cannot be negative"),
+  price: z.coerce.number().nonnegative("Price cannot be negative"),
 
   stock: z.coerce
     .number()
@@ -29,11 +24,13 @@ export const productSchema = z.object({
 
   status: z.enum(["active", "inactive", "draft"]),
 
-  image_url: z
+  image_url: z.string().url("Invalid image URL").nullable().optional(),
+
+  inactive_reason: z
     .string()
-    .url("Invalid image URL")
+    .max(250, "Reason must be 250 characters or less")
     .nullable()
     .optional(),
-})
+});
 
-export type ProductInput = z.infer<typeof productSchema>
+export type ProductInput = z.infer<typeof productSchema>;
