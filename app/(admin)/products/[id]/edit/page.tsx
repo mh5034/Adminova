@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { ProductForm } from "@/components/products/product-form";
+import { redirect } from "next/navigation";
+import { getUserRole } from "@/lib/auth/get-user-role";
 
 interface EditProductPageProps {
   params: Promise<{
@@ -20,6 +22,12 @@ export default async function EditProductPage({
     .select("*")
     .eq("id", id)
     .single();
+
+  const role = await getUserRole();
+
+  if (role !== "admin") {
+    redirect("/products");
+  }
 
   if (error || !product) {
     notFound();

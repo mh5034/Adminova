@@ -6,6 +6,7 @@ import { ArrowLeft, ImageIcon, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
 import { Badge } from "@/components/ui/badge";
+import { getUserRole } from "@/lib/auth/get-user-role";
 import { Button } from "@/components/ui/button";
 
 interface ProductDetailsPageProps {
@@ -25,6 +26,9 @@ export default async function ProductDetailsPage({
     .select("*")
     .eq("id", id)
     .single();
+
+  const role = await getUserRole();
+  const canManage = role === "admin";
 
   if (error || !product) {
     notFound();
@@ -69,15 +73,14 @@ export default async function ProductDetailsPage({
           </div>
         </div>
 
-        <Button
-          nativeButton={false}
-          render={
-            <Link href={`/products/${product.id}/edit`}>
-              <Pencil className="size-4" />
-              Edit product
-            </Link>
-          }
-        />
+        {canManage && (
+          <Button
+            nativeButton={false}
+            render={
+              <Link href={`/products/${product.id}/edit`}>Edit Product</Link>
+            }
+          />
+        )}
       </div>
 
       {/* Main information */}

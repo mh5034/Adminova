@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { productSchema } from "@/lib/validation/product";
+import { getUserRole } from "@/lib/auth/get-user-role";
 
 interface RouteContext {
   params: Promise<{
@@ -36,6 +37,11 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
+  const role = await getUserRole();
+
+  if (role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   try {
     const { id } = await params;
     const supabase = await createClient();
@@ -170,6 +176,11 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 }
 
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
+  const role = await getUserRole();
+
+  if (role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   try {
     const { id } = await params;
     const supabase = await createClient();

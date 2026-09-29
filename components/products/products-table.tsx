@@ -49,6 +49,7 @@ interface ProductsTableProps {
   page: number;
   order: "asc" | "desc";
   hasActiveSort: boolean;
+  canManage: boolean;
   onSortChange: (column: string) => void;
 }
 export function ProductsTable({
@@ -57,6 +58,7 @@ export function ProductsTable({
   page,
   order,
   hasActiveSort,
+  canManage,
   onSortChange,
 }: ProductsTableProps) {
   const queryClient = useQueryClient();
@@ -158,7 +160,7 @@ export function ProductsTable({
   }
   return (
     <div className="overflow-hidden rounded-lg border">
-      {selectedIds.length > 0 && (
+      {canManage && selectedIds.length > 0 && (
         <div className="flex items-center justify-between border-b bg-muted/40 p-3">
           <p className="text-sm font-medium">{selectedIds.length} selected</p>
 
@@ -202,19 +204,22 @@ export function ProductsTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-10">
-              <Checkbox
-                checked={
-                  products.length > 0 && selectedIds.length === products.length
-                }
-                onCheckedChange={(checked) => {
-                  setSelectedIds(
-                    checked ? products.map((product) => product.id) : [],
-                  );
-                }}
-                aria-label="Select all products"
-              />
-            </TableHead>
+            {canManage && (
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={
+                    products.length > 0 &&
+                    selectedIds.length === products.length
+                  }
+                  onCheckedChange={(checked) => {
+                    setSelectedIds(
+                      checked ? products.map((product) => product.id) : [],
+                    );
+                  }}
+                  aria-label="Select all products"
+                />
+              </TableHead>
+            )}
             <TableHead>
               <Button variant="ghost" onClick={() => onSortChange("name")}>
                 Product
@@ -256,19 +261,21 @@ export function ProductsTable({
         <TableBody>
           {products.map((product) => (
             <TableRow key={product.id}>
-              <TableCell>
-                <Checkbox
-                  checked={selectedIds.includes(product.id)}
-                  onCheckedChange={(checked) => {
-                    setSelectedIds((current) =>
-                      checked
-                        ? [...current, product.id]
-                        : current.filter((id) => id !== product.id),
-                    );
-                  }}
-                  aria-label={`Select ${product.name}`}
-                />
-              </TableCell>
+              {canManage && (
+                <TableCell>
+                  <Checkbox
+                    checked={selectedIds.includes(product.id)}
+                    onCheckedChange={(checked) => {
+                      setSelectedIds((current) =>
+                        checked
+                          ? [...current, product.id]
+                          : current.filter((id) => id !== product.id),
+                      );
+                    }}
+                    aria-label={`Select ${product.name}`}
+                  />
+                </TableCell>
+              )}
               <TableCell className="font-medium">
                 <Link
                   href={`/products/${product.id}`}
@@ -315,21 +322,25 @@ export function ProductsTable({
                       }
                     />
 
-                    <DropdownMenuItem
-                      render={
-                        <Link href={`/products/${product.id}/edit`}>
-                          <Pencil />
-                          Edit
-                        </Link>
-                      }
-                    />
+                    {canManage && (
+                      <>
+                        <DropdownMenuItem
+                          render={
+                            <Link href={`/products/${product.id}/edit`}>
+                              <Pencil />
+                              Edit
+                            </Link>
+                          }
+                        />
 
-                    <DropdownMenuItem
-                      onClick={() => setProductToDelete(product)}
-                    >
-                      <Trash2 />
-                      Delete
-                    </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setProductToDelete(product)}
+                        >
+                          <Trash2 />
+                          Delete
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>

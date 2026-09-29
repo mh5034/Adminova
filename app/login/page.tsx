@@ -76,6 +76,43 @@ export default function LoginPage() {
               required
             />
           </div>
+          <div className="mt-6 border-t pt-4">
+            <p className="mb-3 text-xs font-medium text-muted-foreground">
+              Demo accounts
+            </p>
+
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-auto flex-col items-start p-3"
+                onClick={() => {
+                  setEmail("admin@adminova.demo");
+                  setPassword("adminova");
+                }}
+              >
+                <span className="text-xs font-medium">Demo Admin</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  Full access
+                </span>
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="h-auto flex-col items-start p-3"
+                onClick={() => {
+                  setEmail("viewer@adminova.demo");
+                  setPassword("adminova");
+                }}
+              >
+                <span className="text-xs font-medium">Demo Viewer</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  Read only
+                </span>
+              </Button>
+            </div>
+          </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 

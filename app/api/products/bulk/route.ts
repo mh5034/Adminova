@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getUserRole } from "@/lib/auth/get-user-role";
 
 const validStatuses = ["active", "inactive", "draft"];
 
 export async function PATCH(request: NextRequest) {
+  const role = await getUserRole();
+
+  if (role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   try {
     const supabase = await createClient();
 
@@ -55,6 +61,11 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const role = await getUserRole();
+
+  if (role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   try {
     const supabase = await createClient();
 

@@ -1,21 +1,26 @@
-import { ProductForm } from "@/components/products/product-form"
+import { redirect } from "next/navigation";
 
-export default function NewProductPage() {
+import { ProductForm } from "@/components/products/product-form";
+import { getUserRole } from "@/lib/auth/get-user-role";
+
+export default async function NewProductPage() {
+  const role = await getUserRole();
+
+  if (role !== "admin") {
+    redirect("/products");
+  }
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">
-          Create Product
-        </h1>
+        <h1 className="text-2xl font-semibold">Add Product</h1>
 
         <p className="text-sm text-muted-foreground">
-          Add a new product to your inventory.
+          Create a new product in your inventory.
         </p>
       </div>
 
-      <div className="rounded-lg border p-6">
-        <ProductForm />
-      </div>
+      <ProductForm />
     </div>
-  )
+  );
 }

@@ -6,6 +6,7 @@ import { useProducts } from "@/hooks/use-products";
 import { ProductsTable } from "@/components/products/products-table";
 import { ProductsPagination } from "@/components/products/products-pagination";
 import { ProductsToolbar } from "@/components/products/products-toolbar";
+import { useEffect, useState } from "react";
 
 import Link from "next/link";
 import { Boxes, Plus } from "lucide-react";
@@ -30,6 +31,24 @@ export default function ProductsPage() {
   const order: "asc" | "desc" = orderParam === "asc" ? "asc" : "desc";
 
   const hasActiveSort = sortParam !== null;
+
+  const [role, setRole] = useState<"admin" | "viewer">("viewer");
+
+  useEffect(() => {
+    async function loadRole() {
+      const response = await fetch("/api/me");
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+
+      setRole(data.role);
+    }
+
+    void loadRole();
+  }, []);
+
+  const canManage = role === "admin";
 
   const { data, isLoading, isError } = useProducts({
     page,
@@ -124,15 +143,17 @@ export default function ProductsPage() {
           </p>
         </div>
 
-        <Button
-          nativeButton={false}
-          render={
-            <Link href="/products/new">
-              <Plus />
-              Add Product
-            </Link>
-          }
-        />
+        {canManage && (
+          <Button
+            nativeButton={false}
+            render={
+              <Link href="/products/new">
+                <Plus />
+                Add Product
+              </Link>
+            }
+          />
+        )}
       </div>
 
       <ProductsToolbar
@@ -160,6 +181,7 @@ export default function ProductsPage() {
           sort={sort}
           order={order}
           hasActiveSort={hasActiveSort}
+          canManage={canManage}
           onSortChange={handleSortChange}
         />
       ) : (
