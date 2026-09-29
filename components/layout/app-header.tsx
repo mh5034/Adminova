@@ -13,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useEffect, useState } from "react";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 interface CurrentUser {
@@ -26,6 +26,26 @@ export default function AppHeader() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const supabase = createClient();
   const router = useRouter();
+
+  const pathname = usePathname();
+
+  function getPageTitle() {
+    if (pathname === "/dashboard") return "Dashboard";
+
+    if (pathname === "/products") return "Products";
+
+    if (pathname === "/products/new") return "Add Product";
+
+    if (pathname.endsWith("/edit")) return "Edit Product";
+
+    if (/^\/products\/[^/]+$/.test(pathname)) {
+      return "Product Details";
+    }
+
+    return "Adminova";
+  }
+
+  const pageTitle = getPageTitle();
 
   useEffect(() => {
     async function loadUser() {
@@ -53,7 +73,7 @@ export default function AppHeader() {
         <SidebarTrigger />
 
         <div>
-          <h1 className="text-lg font-semibold">Dashboard</h1>
+          <h1 className="text-lg font-semibold">{pageTitle}</h1>{" "}
         </div>
       </div>
 

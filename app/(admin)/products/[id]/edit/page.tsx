@@ -4,6 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { ProductForm } from "@/components/products/product-form";
 import { redirect } from "next/navigation";
 import { getUserRole } from "@/lib/auth/get-user-role";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface EditProductPageProps {
   params: Promise<{
@@ -35,6 +38,16 @@ export default async function EditProductPage({
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      <Button
+        variant="ghost"
+        nativeButton={false}
+        render={
+          <Link href="/products">
+            <ArrowLeft className="size-4" />
+            Back to products
+          </Link>
+        }
+      />
       <div>
         <h1 className="text-2xl font-semibold">Edit Product</h1>
 

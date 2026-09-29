@@ -1,5 +1,4 @@
-import type { Product } from "@/types/product";
-
+import type { Product, ProductsResponse } from "@/types/product";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -84,9 +83,39 @@ export function ProductsTable({
   }, [page]);
 
   async function handleBulkStatus(status: "active" | "inactive" | "draft") {
-    try {
-      setIsBulkLoading(true);
+    setIsBulkLoading(true);
 
+    // Stop any products refetch from overwriting our optimistic update
+    await queryClient.cancelQueries({
+      queryKey: ["products"],
+    });
+
+    // Save all current product query caches for rollback
+    const previousQueries = queryClient.getQueriesData<ProductsResponse>({
+      queryKey: ["products"],
+    });
+
+    // update every cached products page
+    queryClient.setQueriesData<ProductsResponse>(
+      { queryKey: ["products"] },
+      (oldData) => {
+        if (!oldData) return oldData;
+
+        return {
+          ...oldData,
+          data: oldData.data.map((product) =>
+            selectedIds.includes(product.id)
+              ? {
+                  ...product,
+                  status,
+                }
+              : product,
+          ),
+        };
+      },
+    );
+
+    try {
       const response = await fetch("/api/products/bulk", {
         method: "PATCH",
         headers: {
@@ -99,19 +128,30 @@ export function ProductsTable({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update products");
-      }
+        const result = await response.json();
 
-      await queryClient.invalidateQueries({
-        queryKey: ["products"],
-      });
+        throw new Error(result.error || "Failed to update products");
+      }
 
       setSelectedIds([]);
 
       toast.success("Products updated successfully");
-    } catch {
-      toast.error("Failed to update products");
+    } catch (error) {
+      // Roll back to the exact cache state from before the update
+      previousQueries.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+
+      toast.error("Failed to update products", {
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      });
     } finally {
+      // Reconcile optimistic data with the real server state
+      await queryClient.invalidateQueries({
+        queryKey: ["products"],
+      });
+
       setIsBulkLoading(false);
     }
   }
