@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+import { useState } from "react";
+
 import {
   Select,
   SelectContent,
@@ -28,12 +30,14 @@ interface ProductFormProps {
 }
 
 export function ProductForm({ product }: ProductFormProps) {
+  const [step, setStep] = useState(1);
   const router = useRouter();
   const isEditing = Boolean(product);
 
   const {
     register,
     handleSubmit,
+    trigger,
     setValue,
     watch,
     formState: { errors, isSubmitting },
@@ -50,6 +54,15 @@ export function ProductForm({ product }: ProductFormProps) {
     },
   });
 
+  const handleNext = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+
+    const isValid = await trigger(["name", "category", "status"]);
+
+    if (isValid) {
+      setStep(2);
+    }
+  };
   const category = watch("category");
   const status = watch("status");
 
@@ -103,172 +116,233 @@ export function ProductForm({ product }: ProductFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="grid gap-2">
-        <Label htmlFor="name">Product name</Label>
+      <div className="mb-8">
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex size-8 items-center justify-center rounded-full text-sm font-medium ${
+              step >= 1
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            1
+          </div>
 
-        <Input
-          id="name"
-          placeholder="Wireless Headphones"
-          {...register("name")}
-        />
-
-        {errors.name && (
-          <p className="text-sm text-destructive">{errors.name.message}</p>
-        )}
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="description">Description</Label>
-
-        <Textarea
-          id="description"
-          placeholder="Enter a product description..."
-          {...register("description")}
-        />
-
-        {errors.description && (
-          <p className="text-sm text-destructive">
-            {errors.description.message}
-          </p>
-        )}
-      </div>
-
-      <div className="grid gap-2">
-        <Label>Category</Label>
-
-        <Select
-          value={category}
-          onValueChange={(value) => {
-            if (value) {
-              setValue("category", value, {
-                shouldValidate: true,
-              });
-            }
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select a category" />
-          </SelectTrigger>
-
-          <SelectContent>
-            <SelectItem value="Electronics">Electronics</SelectItem>
-
-            <SelectItem value="Clothing">Clothing</SelectItem>
-
-            <SelectItem value="Home & Kitchen">Home & Kitchen</SelectItem>
-
-            <SelectItem value="Sports">Sports</SelectItem>
-
-            <SelectItem value="Accessories">Accessories</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {errors.category && (
-          <p className="text-sm text-destructive">{errors.category.message}</p>
-        )}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2">
-          <Label htmlFor="price">Price</Label>
-
-          <Input
-            id="price"
-            type="number"
-            min="0"
-            step="0.01"
-            {...register("price")}
+          <div
+            className={`h-px flex-1 ${step >= 2 ? "bg-primary" : "bg-border"}`}
           />
 
-          {errors.price && (
-            <p className="text-sm text-destructive">{errors.price.message}</p>
+          <div
+            className={`flex size-8 items-center justify-center rounded-full text-sm font-medium ${
+              step >= 2
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            2
+          </div>
+        </div>
+
+        <div className="mt-3 flex justify-between text-sm">
+          <span className="font-medium">Basic information</span>
+          <span className="font-medium">Pricing & inventory</span>
+        </div>
+      </div>
+      {step === 1 && (
+        <>
+          <div className="grid gap-2">
+            <Label htmlFor="name">Product name</Label>
+
+            <Input
+              id="name"
+              placeholder="Wireless Headphones"
+              {...register("name")}
+            />
+
+            {errors.name && (
+              <p className="text-sm text-destructive">{errors.name.message}</p>
+            )}
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="description">Description</Label>
+
+            <Textarea
+              id="description"
+              placeholder="Enter a product description..."
+              {...register("description")}
+            />
+
+            {errors.description && (
+              <p className="text-sm text-destructive">
+                {errors.description.message}
+              </p>
+            )}
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Category</Label>
+
+            <Select
+              value={category}
+              onValueChange={(value) => {
+                if (value) {
+                  setValue("category", value, {
+                    shouldValidate: true,
+                  });
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="Electronics">Electronics</SelectItem>
+
+                <SelectItem value="Clothing">Clothing</SelectItem>
+
+                <SelectItem value="Home & Kitchen">Home & Kitchen</SelectItem>
+
+                <SelectItem value="Sports">Sports</SelectItem>
+
+                <SelectItem value="Accessories">Accessories</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {errors.category && (
+              <p className="text-sm text-destructive">
+                {errors.category.message}
+              </p>
+            )}
+          </div>
+          <div className="grid gap-2">
+            <Label>Status</Label>
+
+            <Select
+              value={status}
+              onValueChange={(value) => {
+                if (
+                  value === "active" ||
+                  value === "inactive" ||
+                  value === "draft"
+                ) {
+                  setValue("status", value, {
+                    shouldValidate: true,
+                  });
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {errors.status && (
+              <p className="text-sm text-destructive">
+                {errors.status.message}
+              </p>
+            )}
+          </div>
+          {status === "inactive" && (
+            <div className="rounded-md border bg-muted/50 p-3">
+              <p className="text-sm text-muted-foreground">
+                Inactive products will remain in the catalog but will not be
+                treated as currently available.
+              </p>
+            </div>
+          )}
+        </>
+      )}
+      {step === 2 && (
+        <>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="price">Price</Label>
+
+              <Input
+                id="price"
+                type="number"
+                min="0"
+                step="0.01"
+                {...register("price")}
+              />
+
+              {errors.price && (
+                <p className="text-sm text-destructive">
+                  {errors.price.message}
+                </p>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="stock">Stock</Label>
+
+              <Input
+                id="stock"
+                type="number"
+                min="0"
+                step="1"
+                {...register("stock")}
+              />
+
+              {errors.stock && (
+                <p className="text-sm text-destructive">
+                  {errors.stock.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="image_url">Image URL</Label>
+
+            <Input
+              id="image_url"
+              placeholder="https://example.com/product.jpg"
+              {...register("image_url", {
+                setValueAs: (value) => (value === "" ? null : value),
+              })}
+            />
+
+            {errors.image_url && (
+              <p className="text-sm text-destructive">
+                {errors.image_url.message}
+              </p>
+            )}
+          </div>
+        </>
+      )}
+      <div className="flex items-center justify-between pt-4">
+        <div>
+          {step === 2 && (
+            <Button type="button" variant="outline" onClick={() => setStep(1)}>
+              Back
+            </Button>
           )}
         </div>
 
-        <div className="grid gap-2">
-          <Label htmlFor="stock">Stock</Label>
-
-          <Input
-            id="stock"
-            type="number"
-            min="0"
-            step="1"
-            {...register("stock")}
-          />
-
-          {errors.stock && (
-            <p className="text-sm text-destructive">{errors.stock.message}</p>
+        <div className="flex gap-2">
+          {step === 1 ? (
+            <Button key="continue" type="button" onClick={handleNext}>
+              Continue
+            </Button>
+          ) : (
+            <Button key="submit" type="submit" disabled={isSubmitting}>
+              {isSubmitting
+                ? "Saving..."
+                : isEditing
+                  ? "Save changes"
+                  : "Create product"}
+            </Button>
           )}
         </div>
-      </div>
-
-      <div className="grid gap-2">
-        <Label>Status</Label>
-
-        <Select
-          value={status}
-          onValueChange={(value) => {
-            if (
-              value === "active" ||
-              value === "inactive" ||
-              value === "draft"
-            ) {
-              setValue("status", value, {
-                shouldValidate: true,
-              });
-            }
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-
-          <SelectContent>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {errors.status && (
-          <p className="text-sm text-destructive">{errors.status.message}</p>
-        )}
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="image_url">Image URL</Label>
-
-        <Input
-          id="image_url"
-          placeholder="https://example.com/product.jpg"
-          {...register("image_url", {
-            setValueAs: (value) => (value === "" ? null : value),
-          })}
-        />
-
-        {errors.image_url && (
-          <p className="text-sm text-destructive">{errors.image_url.message}</p>
-        )}
-      </div>
-
-      <div className="flex justify-end gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push("/products")}
-        >
-          Cancel
-        </Button>
-
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting
-            ? isEditing
-              ? "Saving..."
-              : "Creating..."
-            : isEditing
-              ? "Save changes"
-              : "Create product"}
-        </Button>
       </div>
     </form>
   );
