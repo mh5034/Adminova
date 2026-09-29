@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, User } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -8,17 +8,37 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+interface CurrentUser {
+  email: string;
+  role: "admin" | "viewer";
+  name: string;
+}
+
 export default function AppHeader() {
+  const [user, setUser] = useState<CurrentUser | null>(null);
   const supabase = createClient();
   const router = useRouter();
+
+  useEffect(() => {
+    async function loadUser() {
+      const response = await fetch("/api/me");
+
+      if (!response.ok) return;
+
+      const data: CurrentUser = await response.json();
+      setUser(data);
+    }
+
+    void loadUser();
+  }, []);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -45,20 +65,30 @@ export default function AppHeader() {
             render={<Button variant="ghost" className="h-10 gap-2 px-2" />}
           >
             <Avatar className="size-8">
-              <AvatarImage src="" />
-              <AvatarFallback>ME</AvatarFallback>
+              <AvatarFallback>
+                {user?.role === "admin"
+                  ? "DA"
+                  : user?.role === "viewer"
+                    ? "DV"
+                    : "DU"}
+              </AvatarFallback>
             </Avatar>
 
             <div className="hidden text-left md:block">
-              <p className="text-sm font-medium">Mohammad</p>
-              <p className="text-xs text-muted-foreground">Administrator</p>
+              <p className="max-w-40 truncate text-sm font-medium">
+                {user?.name ?? "Loading..."}
+              </p>
+
+              <p className="text-xs capitalize text-muted-foreground">
+                {user?.role ?? "User"}
+              </p>
             </div>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
-              <button onClick={handleLogout}>Sign out</button>
+              Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

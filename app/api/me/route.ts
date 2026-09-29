@@ -19,6 +19,8 @@ export async function GET() {
     .single();
 
   return NextResponse.json({
+    email: user.email,
     role: profile?.role ?? "viewer",
+    name: profile?.role === "admin" ? "Demo Admin" : "Demo Viewer",
   });
 }
