@@ -78,14 +78,14 @@ Protected routes and API endpoints enforce authorization in addition to hiding r
 
 ```text
 Email: admin@adminova.demo
-Password: AdminDemo123!
+Password: adminova
 ```
 
 ### Viewer
 
 ```text
 Email: viewer@adminova.demo
-Password: ViewerDemo123!
+Password: adminova
 ```
 
 > Demo credentials are provided for assessment purposes only.
