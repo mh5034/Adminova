@@ -14,7 +14,7 @@ export default async function NewProductPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <Button
         variant="ghost"
         nativeButton={false}
@@ -33,8 +33,9 @@ export default async function NewProductPage() {
           Create a new product in your inventory.
         </p>
       </div>
-
-      <ProductForm />
+      <div className="rounded-lg border p-6">
+        <ProductForm />
+      </div>
     </div>
   );
 }

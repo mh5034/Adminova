@@ -66,7 +66,6 @@ export default function ProductsPage() {
       updateParams({
         sort: column,
         order: "asc",
-        page: "1",
       });
       return;
     }
@@ -76,7 +75,6 @@ export default function ProductsPage() {
       updateParams({
         sort: column,
         order: "desc",
-        page: "1",
       });
       return;
     }
@@ -85,7 +83,6 @@ export default function ProductsPage() {
     updateParams({
       sort: "",
       order: "",
-      page: "1",
     });
   }
 

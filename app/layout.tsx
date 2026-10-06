@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
 import { QueryProvider } from "@/components/providers/query-provider";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Adminova",
@@ -19,6 +20,7 @@ export default function RootLayout({
       <body>
         <QueryProvider>
           {children}
+          <Analytics />
           <Toaster />
         </QueryProvider>
       </body>
