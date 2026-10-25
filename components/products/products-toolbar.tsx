@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Search, X } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -19,6 +20,7 @@ interface ProductsToolbarProps {
   onSearchChange: (value: string) => void;
   onCategoryChange: (value: string) => void;
   onStatusChange: (value: string) => void;
+  onClearFilters: () => void;
 }
 
 export function ProductsToolbar({
@@ -28,6 +30,7 @@ export function ProductsToolbar({
   onSearchChange,
   onCategoryChange,
   onStatusChange,
+  onClearFilters,
 }: ProductsToolbarProps) {
   const [searchValue, setSearchValue] = useState(search);
 
@@ -36,13 +39,13 @@ export function ProductsToolbar({
       if (searchValue !== search) {
         onSearchChange(searchValue);
       }
-    }, 500);
+    }, 300);
 
     return () => clearTimeout(timeout);
-  }, [searchValue]);
+  }, [searchValue, search, onSearchChange]);
 
   return (
-    <div className="flex flex-col gap-3 md:flex-row">
+    <div className="flex flex-col gap-3 md:flex-row md:items-center">
       <div className="relative w-full md:max-w-sm">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
@@ -105,6 +108,18 @@ export function ProductsToolbar({
           <SelectItem value="draft">Draft</SelectItem>
         </SelectContent>
       </Select>
+
+      {(search || category !== "all" || status !== "all") && (
+        <Button
+          variant="outline"
+          onClick={() => {
+            setSearchValue("");
+            onClearFilters();
+          }}
+        >
+          Clear filters
+        </Button>
+      )}
     </div>
   );
 }

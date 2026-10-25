@@ -205,6 +205,15 @@ export function ProductsTable({
           <p className="text-sm font-medium">{selectedIds.length} selected</p>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isBulkLoading}
+              onClick={() => setSelectedIds([])}
+            >
+              Clear selection
+            </Button>
+
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={

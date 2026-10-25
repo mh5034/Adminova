@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { useProducts } from "@/hooks/use-products";
 import { ProductsTable } from "@/components/products/products-table";
@@ -8,7 +9,7 @@ import { ProductsPagination } from "@/components/products/products-pagination";
 import { ProductsToolbar } from "@/components/products/products-toolbar";
 
 import Link from "next/link";
-import { Boxes, Plus } from "lucide-react";
+import { Boxes, LoaderCircle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductsTableSkeleton } from "@/components/products/products-table-skeleton";
 
@@ -16,26 +17,48 @@ interface ProductsPageClientProps {
   canManage: boolean;
 }
 
+interface ProductQuery {
+  page: number;
+  search: string;
+  category: string;
+  status: string;
+  sort: string;
+  order: "asc" | "desc";
+  hasActiveSort: boolean;
+}
+
+function getProductQuery(params: URLSearchParams): ProductQuery {
+  const sortParam = params.get("sort");
+
+  return {
+    page: Math.max(Number(params.get("page")) || 1, 1),
+    search: params.get("search") ?? "",
+    category: params.get("category") ?? "all",
+    status: params.get("status") ?? "all",
+    sort: sortParam ?? "created_at",
+    order: params.get("order") === "asc" ? "asc" : "desc",
+    hasActiveSort: sortParam !== null,
+  };
+}
+
 export function ProductsPageClient({ canManage }: ProductsPageClientProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const [query, setQuery] = useState(() =>
+    getProductQuery(new URLSearchParams(searchParams.toString())),
+  );
 
-  const page = Math.max(Number(searchParams.get("page")) || 1, 1);
+  useEffect(() => {
+    function syncFromUrl() {
+      setQuery(getProductQuery(new URLSearchParams(window.location.search)));
+    }
 
-  const search = searchParams.get("search") ?? "";
-  const category = searchParams.get("category") ?? "all";
-  const status = searchParams.get("status") ?? "all";
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+  }, []);
 
-  const sortParam = searchParams.get("sort");
-  const orderParam = searchParams.get("order");
+  const { page, search, category, status, sort, order, hasActiveSort } = query;
 
-  const sort = sortParam ?? "created_at";
-
-  const order: "asc" | "desc" = orderParam === "asc" ? "asc" : "desc";
-
-  const hasActiveSort = sortParam !== null;
-
-  const { data, isLoading, isError } = useProducts({
+  const { data, isLoading, isFetching, isError } = useProducts({
     page,
     limit: 10,
     search,
@@ -72,7 +95,7 @@ export function ProductsPageClient({ canManage }: ProductsPageClientProps) {
   }
 
   function updateParams(updates: Record<string, string>) {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
 
     Object.entries(updates).forEach(([key, value]) => {
       if (!value || value === "all") {
@@ -82,9 +105,12 @@ export function ProductsPageClient({ canManage }: ProductsPageClientProps) {
       }
     });
 
-    router.replace(`/products?${params.toString()}`, {
-      scroll: false,
-    });
+    setQuery(getProductQuery(params));
+    const queryString = params.toString();
+    const url = `${window.location.pathname}${
+      queryString ? `?${queryString}` : ""
+    }${window.location.hash}`;
+    window.history.replaceState(null, "", url);
   }
 
   function handlePageChange(newPage: number) {
@@ -114,11 +140,35 @@ export function ProductsPageClient({ canManage }: ProductsPageClientProps) {
     });
   }
 
+  function handleClearFilters() {
+    updateParams({
+      search: "",
+      category: "all",
+      status: "all",
+      page: "1",
+    });
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Products</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold">Products</h1>
+            <span
+              className="inline-flex w-36 items-center gap-1.5 text-sm text-muted-foreground"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {isFetching && (
+                <>
+                  <LoaderCircle className="size-4 animate-spin" />
+                  Updating...
+                </>
+              )}
+            </span>
+          </div>
 
           <p className="text-sm text-muted-foreground">
             Manage and monitor your product inventory.
@@ -139,12 +189,14 @@ export function ProductsPageClient({ canManage }: ProductsPageClientProps) {
       </div>
 
       <ProductsToolbar
+        key={search}
         search={search}
         category={category}
         status={status}
         onSearchChange={handleSearchChange}
         onCategoryChange={handleCategoryChange}
         onStatusChange={handleStatusChange}
+        onClearFilters={handleClearFilters}
       />
 
       {isLoading ? (
